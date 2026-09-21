@@ -121,15 +121,24 @@ export async function* streamAnthropicMessages(
 function toAnthropicMessages(messages: GenerateOptions['messages']): { system?: string; messages: unknown[] } {
   const systemParts: string[] = []
   const out: unknown[] = []
+  // Consecutive tool responses fold into ONE user message carrying all
+  // tool_result blocks — the shape the Messages API expects after tool_use.
+  const pendingToolResults: unknown[] = []
+  const flushToolResults = () => {
+    if (pendingToolResults.length === 0) return
+    out.push({ role: 'user', content: pendingToolResults.splice(0) })
+  }
   for (const message of messages) {
     switch (message.role) {
       case 'system':
         systemParts.push(message.content)
         break
       case 'user':
+        flushToolResults()
         out.push({ role: 'user', content: message.content })
         break
       case 'assistant': {
+        flushToolResults()
         if (!message.toolCalls?.length) {
           out.push({ role: 'assistant', content: message.content })
           break
@@ -149,13 +158,15 @@ function toAnthropicMessages(messages: GenerateOptions['messages']): { system?: 
         break
       }
       case 'tool':
-        out.push({
-          role: 'user',
-          content: [{ type: 'tool_result', tool_use_id: message.toolCallId, content: message.content }],
+        pendingToolResults.push({
+          type: 'tool_result',
+          tool_use_id: message.toolCallId,
+          content: message.content,
         })
         break
     }
   }
+  flushToolResults()
   const system = systemParts.join('\n\n')
   return { system: system || undefined, messages: out }
 }

@@ -94,9 +94,12 @@ export class SessionStore {
 
   /**
    * Model-visible history derived from the committed prefix — the log is the
-   * only storage. A consecutive run of tool/call + tool/result events folds
-   * into one assistant message carrying `toolCalls` plus one `role: 'tool'`
-   * message per paired result; unpaired calls are dropped.
+   * only storage. A consecutive run of tool/call + tool/result events answers
+   * the assistant message that requested them (the loop always logs that
+   * message first): tool responses are appended right after it, and any call
+   * whose result never landed (a crashed run) is dropped from the request so
+   * the tool_calls stay protocol-valid. A run with no owning assistant
+   * message (not producible by the loop; defensive) synthesizes one.
    */
   deriveMessages(): Message[] {
     const events = this.readAll()
@@ -126,17 +129,29 @@ export class SessionStore {
         }
         j++
       }
-      const toolCalls: ToolCall[] = []
-      const toolMessages: Message[] = []
-      for (const [toolCallId, call] of calls) {
-        const content = results.get(toolCallId)
-        if (content === undefined) continue
-        toolCalls.push(call)
-        toolMessages.push({ role: 'tool', toolCallId, content })
-      }
-      if (toolCalls.length > 0) {
-        messages.push({ role: 'assistant', content: '', toolCalls })
-        messages.push(...toolMessages)
+      const pairedIds = [...calls.keys()].filter((id) => results.has(id))
+      if (pairedIds.length > 0) {
+        const toolMessages: Message[] = pairedIds.map((id) => ({
+          role: 'tool',
+          toolCallId: id,
+          content: results.get(id)!,
+        }))
+        const last = messages[messages.length - 1]
+        if (last?.role === 'assistant' && last.toolCalls?.length) {
+          const answered = new Set(pairedIds)
+          messages[messages.length - 1] = {
+            ...last,
+            toolCalls: last.toolCalls.filter((call) => answered.has(call.id)),
+          }
+          messages.push(...toolMessages)
+        } else {
+          messages.push({
+            role: 'assistant',
+            content: '',
+            toolCalls: pairedIds.map((id) => calls.get(id)!),
+          })
+          messages.push(...toolMessages)
+        }
       }
       i = j
     }
