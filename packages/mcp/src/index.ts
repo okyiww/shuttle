@@ -1,0 +1,5 @@
+export { McpManager } from './manager.js'
+export type { McpServerStatus, McpServerView, McpToolView, ReconnectPolicy } from './manager.js'
+export { authStatusOf, credentialsDir, ShuttleOAuthProvider } from './oauth-provider.js'
+export type { McpAuthStatus, McpCredentialsFile } from './oauth-provider.js'
+export { sanitizedEnv, validateServerName } from './env.js'

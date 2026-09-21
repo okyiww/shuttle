@@ -1,0 +1,28 @@
+{
+  "name": "@shuttle/llm-openai",
+  "version": "0.0.0",
+  "description": "OpenAI-compatible adapter: openai-completions + anthropic-messages wires, compat switches, SSE streaming, retry — built on global fetch, zero runtime deps",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@shuttle/config": "workspace:*",
+    "@shuttle/llm": "workspace:*"
+  }
+}

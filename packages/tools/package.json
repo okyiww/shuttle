@@ -1,0 +1,27 @@
+{
+  "name": "@shuttle/tools",
+  "version": "0.0.0",
+  "description": "Tool registry service with guard waterfall: register/list/execute tools with allow/ask/deny policies",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@shuttle/core": "workspace:*"
+  }
+}

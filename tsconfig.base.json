@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shuttle/api": ["./packages/api/src/index.ts"],
+      "@shuttle/core": ["./packages/core/src/index.ts"],
+      "@shuttle/config": ["./packages/config/src/index.ts"],
+      "@shuttle/llm": ["./packages/llm/src/index.ts"],
+      "@shuttle/llm-openai": ["./packages/llm-openai/src/index.ts"],
+      "@shuttle/mcp": ["./packages/mcp/src/index.ts"],
+      "@shuttle/session": ["./packages/session/src/index.ts"],
+      "@shuttle/tools": ["./packages/tools/src/index.ts"]
+    }
+  }
+}

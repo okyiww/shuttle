@@ -1,0 +1,27 @@
+{
+  "name": "@shuttle/llm",
+  "version": "0.0.0",
+  "description": "Provider-neutral LLM runtime: LlmAdapter abstraction, StreamChunk protocol, adapter registry — zero wire code",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@shuttle/core": "workspace:*"
+  }
+}

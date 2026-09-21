@@ -1,0 +1,28 @@
+{
+  "name": "@shuttle/session",
+  "version": "0.0.0",
+  "description": "Event-sourced session log: append-only JSONL, deriveMessages, crash recovery, format versioning",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@shuttle/core": "workspace:*",
+    "@shuttle/llm": "workspace:*"
+  }
+}

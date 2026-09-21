@@ -1,0 +1,29 @@
+{
+  "name": "@shuttle/mcp",
+  "version": "0.0.0",
+  "description": "MCP client manager: stdio + streamable-http servers, tools bridged into ctx.tools as mcp__<server>__<tool>, reconnect with backoff",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@shuttle/core": "workspace:*",
+    "@shuttle/tools": "workspace:*"
+  }
+}

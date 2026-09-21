@@ -1,0 +1,19 @@
+# Shuttle 项目默认配置（只读基底，随仓库提交）。
+# 个人覆盖请写 ~/.shuttle/config.yml（CLI / Web UI 只写用户层，文件 0600）。
+# apiKey 规则：可直接存真实 key 到用户层（apiKey 字段，读取路径一律掩码）；
+# 项目层建议只写 apiKeyEnv（环境变量名），团队共享基底不带真 key。
+
+endpoints:
+  deepseek:
+    api: openai-completions
+    baseURL: https://api.deepseek.com/v1
+    apiKeyEnv: DEEPSEEK_API_KEY
+    models:
+      - { id: deepseek-chat, contextWindow: 64000 }
+
+# mcp:
+#   servers:
+#     jira:
+#       transport: stdio
+#       command: node
+#       args: [./servers/jira/dist/index.js]

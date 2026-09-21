@@ -1,0 +1,41 @@
+{
+  "name": "@shuttle/cli",
+  "version": "0.0.0",
+  "description": "shuttle headless CLI: single-turn `shuttle run`, layered `shuttle config --dump`",
+  "type": "module",
+  "bin": {
+    "shuttle": "bin/shuttle.mjs"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@shuttle/api": "workspace:*",
+    "@shuttle/config": "workspace:*",
+    "@shuttle/core": "workspace:*",
+    "@shuttle/llm": "workspace:*",
+    "@shuttle/llm-openai": "workspace:*",
+    "@shuttle/mcp": "workspace:*",
+    "@shuttle/session": "workspace:*",
+    "@shuttle/tools": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0"
+  }
+}

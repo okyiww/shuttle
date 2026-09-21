@@ -1,0 +1,27 @@
+{
+  "name": "@shuttle/config",
+  "version": "0.0.0",
+  "description": "Layered config (project shuttle.config.yml + user ~/.shuttle/config.yml) with a hand-rolled minimal YAML parser, file watching, and user-layer writes",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@shuttle/core": "workspace:*"
+  }
+}
