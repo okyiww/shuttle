@@ -1,6 +1,6 @@
 export { findProjectRoot, shuttleDir } from './paths.js'
 export { SkillLoader, isSkillName, parseFrontmatter } from './skills.js'
-export type { SkillSummary } from './skills.js'
+export type { SkillCategory, SkillSummary } from './skills.js'
 export {
   INSTRUCTION_BUDGET_BYTES,
   loadAgentInstructions,

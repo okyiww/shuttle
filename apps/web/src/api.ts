@@ -164,7 +164,7 @@ export const api = {
   testEndpoint: (name: string) => request<TestResult>('POST', `/api/endpoints/${encodeURIComponent(name)}/test`),
   listSessions: () => request<SessionSummary[]>('GET', '/api/sessions'),
   clearSessions: () => request<{ ok: boolean; deleted: number }>('DELETE', '/api/sessions'),
-  listSkills: () => request<{ name: string; description: string; source: 'project' | 'user'; digest: string }[]>('GET', '/api/skills'),
+  listSkills: () => request<{ name: string; description: string; category: 'workflow' | 'experience'; source: 'project' | 'user'; digest: string }[]>('GET', '/api/skills'),
   skillContent: (name: string) => request<{ name: string; content: string }>('GET', `/api/skills/${encodeURIComponent(name)}`),
   listNotes: () => request<{ path: string; title: string; lifecycle: string; updatedAt: string }[]>('GET', '/api/notes'),
   readMemory: (path: string) => request<{ path: string; content: string }>('GET', `/api/memory/read?path=${encodeURIComponent(path)}`),

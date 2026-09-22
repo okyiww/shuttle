@@ -4,6 +4,7 @@ import { api } from '../api'
 interface SkillItem {
   name: string
   description: string
+  category: 'workflow' | 'experience'
   source: 'project' | 'user'
 }
 
@@ -26,6 +27,7 @@ const NEW_SKILL = [
   '---',
   'name: new-skill',
   'description: 一句话说明什么时候用这个 skill',
+  'category: workflow',
   '---',
   '',
   '## 适用场景',
@@ -172,28 +174,42 @@ export function Memory() {
   return (
     <div className="memory">
       <aside className="memory-nav">
-        <div className="memory-head">
-          <h3>技能</h3>
-          <span className="dim">
-            {skills.length}
-            <button className="ghost memory-new" onClick={() => openNew('skill')} title="新建技能">
-              ＋
-            </button>
-          </span>
-        </div>
-        {skills.map((skill) => (
-          <div
-            key={skill.name}
-            className={`memory-item ${selected?.kind === 'skill' && selected.key === skill.name ? 'active' : ''}`}
-            onClick={() => void openSkill(skill.name)}
-          >
-            <div className="title">
-              {skill.name}
-              <span className="badge">{skill.source === 'project' ? '项目' : '个人'}</span>
+        {(
+          [
+            { category: 'workflow', title: '工作流模板' },
+            { category: 'experience', title: '经验沉淀' },
+          ] as const
+        ).map((group) => {
+          const items = skills.filter((skill) => skill.category === group.category)
+          return (
+            <div key={group.category}>
+              <div className="memory-head">
+                <h3>{group.title}</h3>
+                <span className="dim">
+                  {items.length}
+                  {group.category === 'workflow' && (
+                    <button className="ghost memory-new" onClick={() => openNew('skill')} title="新建工作流模板">
+                      ＋
+                    </button>
+                  )}
+                </span>
+              </div>
+              {items.map((skill) => (
+                <div
+                  key={skill.name}
+                  className={`memory-item ${selected?.kind === 'skill' && selected.key === skill.name ? 'active' : ''}`}
+                  onClick={() => void openSkill(skill.name)}
+                >
+                  <div className="title">
+                    {skill.name}
+                    <span className="badge">{skill.source === 'project' ? '项目' : '个人'}</span>
+                  </div>
+                  <div className="dim">{skill.description}</div>
+                </div>
+              ))}
             </div>
-            <div className="dim">{skill.description}</div>
-          </div>
-        ))}
+          )
+        })}
         <div className="memory-head">
           <h3>笔记</h3>
           <span className="dim">

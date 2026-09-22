@@ -14,19 +14,28 @@ function escapeText(value: string): string {
 const CATALOG_DESCRIPTION_MAX_LENGTH = 500
 
 function renderCatalog(skills: SkillSummary[]): string {
-  const entries = skills.map((skill) => ({
-    name: skill.name,
-    description:
+  const describe = (skill: SkillSummary): string => {
+    const description =
       skill.description.length > CATALOG_DESCRIPTION_MAX_LENGTH
         ? `${skill.description.slice(0, CATALOG_DESCRIPTION_MAX_LENGTH)}…`
-        : skill.description,
-  }))
+        : skill.description
+    return `- \`${skill.name}\`: ${escapeText(description)}`
+  }
+  const workflow = skills.filter((skill) => skill.category === 'workflow')
+  const experience = skills.filter((skill) => skill.category === 'experience')
+  const groups: string[] = []
+  if (workflow.length > 0) {
+    groups.push('Workflow templates (curated methodology — follow these when applicable):', ...workflow.map(describe))
+  }
+  if (experience.length > 0) {
+    groups.push('Distilled experience (from real sessions — treat as reference):', ...experience.map(describe))
+  }
   return [
     '<system-reminder>',
     'A skill is a reusable set of task-specific instructions. The following skills are available in this session:',
     '',
     '<available_skills>',
-    ...entries.map((entry) => `- \`${entry.name}\`: ${escapeText(entry.description)}`),
+    ...groups,
     '</available_skills>',
     '',
     "If the user names a skill, or the task clearly matches a skill's description, call the `skill` tool with the exact skill name before taking task actions. Load all applicable skills, then follow their full instructions. This catalog contains summaries only; do not infer or follow a skill's instructions until it has been loaded.",

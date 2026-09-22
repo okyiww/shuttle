@@ -11,9 +11,13 @@ export function isSkillName(name: string): boolean {
   return SKILL_NAME_PATTERN.test(name)
 }
 
+/** `workflow` = 手写的方法论/流程模板（稳定、精心维护）；`experience` = 从对话沉淀的经验（多、会增长）。 */
+export type SkillCategory = 'workflow' | 'experience'
+
 export interface SkillSummary {
   name: string
   description: string
+  category: SkillCategory
   /** Project `.shuttle/skills` vs user-global `~/.shuttle/skills`. */
   source: 'project' | 'user'
   /** SHA-1 of the full file content (frontmatter included). */
@@ -126,7 +130,8 @@ function parseSkill(raw: SkillFile, root: SkillRoot): SkillEntry | undefined {
     console.warn(`skill file ${raw.path} ignored: invalid skill name "${name}"`)
     return undefined
   }
-  return { name, description, content: raw.content, digest: sha1(raw.content), source: root.rank === 0 ? 'project' : 'user', path: raw.path, bundle: raw.bundle, rank: root.rank }
+  const category: SkillCategory = parsed.data.category === 'experience' ? 'experience' : 'workflow'
+  return { name, description, category, content: raw.content, digest: sha1(raw.content), source: root.rank === 0 ? 'project' : 'user', path: raw.path, bundle: raw.bundle, rank: root.rank }
 }
 
 /**
@@ -159,7 +164,7 @@ export class SkillLoader {
 
   /** Catalog summaries for the `<available_skills>` injection. */
   catalog(): SkillSummary[] {
-    return this.scan().map(({ name, description, source, digest }) => ({ name, description, source, digest }))
+    return this.scan().map(({ name, description, category, source, digest }) => ({ name, description, category, source, digest }))
   }
 
   /** Full SKILL.md content (frontmatter included), for the `skill` tool result. */
