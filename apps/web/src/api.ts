@@ -16,11 +16,11 @@ export interface CompatView {
 }
 
 export interface EndpointConfigView {
-  api: 'openai-completions' | 'anthropic-messages'
+  api: 'openai-completions' | 'anthropic-messages' | 'ollama'
   baseURL: string
   /** Masked on every read path (first3****last4, ≤7 chars fully masked). */
   apiKey?: string
-  apiKeyEnv: string
+  apiKeyEnv?: string
   headers?: Record<string, string>
   compat?: CompatView
   models?: ModelConfigView[]
@@ -104,6 +104,7 @@ export interface SessionEventView {
   message?: {
     role: string
     content: string
+    images?: string[]
     reasoning?: string
     toolCalls?: SessionToolCallView[]
   }
@@ -162,7 +163,26 @@ export const api = {
   setDefault: (endpoint?: string, model?: string) => request<ConfigResponse>('PUT', '/api/config/agent', { endpoint, model }),
   testEndpoint: (name: string) => request<TestResult>('POST', `/api/endpoints/${encodeURIComponent(name)}/test`),
   listSessions: () => request<SessionSummary[]>('GET', '/api/sessions'),
+  clearSessions: () => request<{ ok: boolean; deleted: number }>('DELETE', '/api/sessions'),
+  listSkills: () => request<{ name: string; description: string; source: 'project' | 'user'; digest: string }[]>('GET', '/api/skills'),
+  skillContent: (name: string) => request<{ name: string; content: string }>('GET', `/api/skills/${encodeURIComponent(name)}`),
+  listNotes: () => request<{ path: string; title: string; lifecycle: string; updatedAt: string }[]>('GET', '/api/notes'),
+  readMemory: (path: string) => request<{ path: string; content: string }>('GET', `/api/memory/read?path=${encodeURIComponent(path)}`),
+  saveSkill: (content: string, previousName?: string) =>
+    request<{ ok: boolean; name: string }>('PUT', '/api/skills', { content, previousName }),
+  deleteSkill: (name: string) => request<{ ok: boolean; name: string }>('DELETE', `/api/skills/${encodeURIComponent(name)}`),
+  deleteMemory: (path: string) => request<{ ok: boolean; path: string }>('DELETE', `/api/memory?path=${encodeURIComponent(path)}`),
+  promoteMemory: (path: string) =>
+    request<{ markdown: string }>('POST', '/api/memory/promote', { path }),
   sessionEvents: (id: string) => request<SessionEventsResponse>('GET', `/api/sessions/${encodeURIComponent(id)}/events`),
+  distillSessions: (sessionIds: string[], target: 'note' | 'skill') =>
+    request<{ suggestedPath: string; markdown: string }>(
+      'POST',
+      '/api/sessions/distill',
+      { sessionIds, target },
+    ),
+  writeMemory: (path: string, content: string) =>
+    request<{ ok: boolean; path: string }>('POST', '/api/memory/write', { path, content }),
   listMcp: () => request<McpServerView[]>('GET', '/api/mcp'),
   putMcpServer: (name: string, server: McpServerConfigView) =>
     request<{ servers: McpServerView[] }>('PUT', `/api/config/mcp/servers/${encodeURIComponent(name)}`, server),

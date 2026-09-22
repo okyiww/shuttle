@@ -4,7 +4,7 @@ import { api } from '../api'
 
 interface Draft {
   name: string
-  api: 'openai-completions' | 'anthropic-messages'
+  api: 'openai-completions' | 'anthropic-messages' | 'ollama'
   baseURL: string
   /** Password input. Empty = keep; a lone '' sent only via the clear path. Masked sentinel = keep. */
   apiKey: string
@@ -20,6 +20,8 @@ interface TestState {
   status: 'testing' | 'ok' | 'fail'
   text: string
 }
+
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434'
 
 function draftFrom(name: string, endpoint: EndpointConfigView | undefined): Draft {
   const base = {
@@ -55,11 +57,13 @@ function draftToBody(draft: Draft): EndpointConfigView {
   if (draft.thinkingFormat) compat.thinkingFormat = draft.thinkingFormat
   const apiKey =
     draft.apiKey === draft.apiKeyMask ? undefined : draft.apiKey === '' && draft.apiKeyMask !== '' ? '' : draft.apiKey || undefined
+  // ollama is a local, keyless service: never persist key material for it.
+  const isOllama = draft.api === 'ollama'
   return {
     api: draft.api,
     baseURL: draft.baseURL.trim(),
-    apiKeyEnv: draft.apiKeyEnv.trim(),
-    ...(apiKey !== undefined ? { apiKey } : {}),
+    ...(apiKey !== undefined && !isOllama ? { apiKey } : {}),
+    ...(draft.apiKeyEnv.trim() && !isOllama ? { apiKeyEnv: draft.apiKeyEnv.trim() } : {}),
     ...(models.length > 0 ? { models } : {}),
     ...(Object.keys(compat).length > 0 ? { compat } : {}),
   }
@@ -87,14 +91,20 @@ export function Endpoints({
     setEditing(draftFrom(name ?? '', name ? config?.config.endpoints?.[name] : undefined))
   }
 
+  const updateEditing = (patch: Partial<Draft>) => {
+    if (!editing) return
+    setFormError(null)
+    setEditing({ ...editing, ...patch })
+  }
+
   const submit = async () => {
     if (!editing) return
     if (!/^[A-Za-z0-9_.-]+$/.test(editing.name)) {
       setFormError('name 只能包含字母、数字、_ . -')
       return
     }
-    if (!editing.baseURL.trim() || !editing.apiKeyEnv.trim()) {
-      setFormError('baseURL 与 apiKeyEnv 必填')
+    if (!editing.baseURL.trim() && editing.api !== 'ollama') {
+      setFormError('baseURL 必填')
       return
     }
     try {
@@ -167,7 +177,7 @@ export function Endpoints({
               <div className="baseurl">{endpoint.baseURL}</div>
               <div className="meta">
                 {endpoint.models?.length ? `${endpoint.models.length} 个 model` : '未配置 model'} · key 环境变量{' '}
-                <code>{endpoint.apiKeyEnv}</code>
+                <code>{endpoint.apiKeyEnv || '未配置'}</code>
               </div>
               {endpoint.apiKey && <div className="meta key-mask">已存 key {endpoint.apiKey}</div>}
               <div className="card-actions">
@@ -203,7 +213,7 @@ export function Endpoints({
               <label>name（保存后不可改；同名即整体替换）</label>
               <input
                 value={editing.name}
-                onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                onChange={(e) => updateEditing({ name: e.target.value })}
                 disabled={Boolean(config?.config.endpoints?.[editing.name])}
                 placeholder="deepseek"
               />
@@ -213,47 +223,58 @@ export function Endpoints({
                 <label>api</label>
                 <select
                   value={editing.api}
-                  onChange={(e) => setEditing({ ...editing, api: e.target.value as Draft['api'] })}
+                  onChange={(e) => {
+                    const api = e.target.value as Draft['api']
+                    updateEditing({
+                      api,
+                      ...(api === 'ollama' && !editing.baseURL.trim() ? { baseURL: DEFAULT_OLLAMA_BASE_URL } : {}),
+                    })
+                  }}
                 >
                   <option value="openai-completions">openai-completions</option>
                   <option value="anthropic-messages">anthropic-messages</option>
+                  <option value="ollama">ollama (本地)</option>
                 </select>
               </div>
+              {editing.api !== 'ollama' && (
+                <div className="form-row">
+                  <label>apiKeyEnv（可选；环境变量回退，团队共享用）</label>
+                  <input
+                    value={editing.apiKeyEnv}
+                    onChange={(e) => updateEditing({ apiKeyEnv: e.target.value })}
+                    placeholder="DEEPSEEK_API_KEY"
+                  />
+                </div>
+              )}
+            </div>
+            {editing.api !== 'ollama' && (
               <div className="form-row">
-                <label>apiKeyEnv（环境变量回退，团队共享用）</label>
-                <input
-                  value={editing.apiKeyEnv}
-                  onChange={(e) => setEditing({ ...editing, apiKeyEnv: e.target.value })}
-                  placeholder="DEEPSEEK_API_KEY"
-                />
+                <label>API Key</label>
+                <div className="password-row">
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={editing.apiKey}
+                    onChange={(e) => updateEditing({ apiKey: e.target.value })}
+                    placeholder={editing.apiKeyMask || 'sk-...'}
+                    autoComplete="off"
+                  />
+                  <button type="button" className="ghost" onClick={() => setShowKey((prev) => !prev)}>
+                    {showKey ? '🙈' : '👁'}
+                  </button>
+                </div>
+                <div className="field-hint">
+                  {editing.apiKeyMask
+                    ? `当前已存 ${editing.apiKeyMask} —— 留空保持不变；删除请清空保存。`
+                    : '未设置 —— 将使用环境变量'}
+                  {editing.apiKeyEnv ? ` ${editing.apiKeyEnv}` : ''}
+                </div>
               </div>
-            </div>
-            <div className="form-row">
-              <label>API Key</label>
-              <div className="password-row">
-                <input
-                  type={showKey ? 'text' : 'password'}
-                  value={editing.apiKey}
-                  onChange={(e) => setEditing({ ...editing, apiKey: e.target.value })}
-                  placeholder={editing.apiKeyMask || 'sk-...'}
-                  autoComplete="off"
-                />
-                <button type="button" className="ghost" onClick={() => setShowKey((prev) => !prev)}>
-                  {showKey ? '🙈' : '👁'}
-                </button>
-              </div>
-              <div className="field-hint">
-                {editing.apiKeyMask
-                  ? `当前已存 ${editing.apiKeyMask} —— 留空保持不变；删除请清空保存。`
-                  : '未设置 —— 将使用环境变量'}
-                {editing.apiKeyEnv ? ` ${editing.apiKeyEnv}` : ''}
-              </div>
-            </div>
+            )}
             <div className="form-row">
               <label>baseURL</label>
               <input
                 value={editing.baseURL}
-                onChange={(e) => setEditing({ ...editing, baseURL: e.target.value })}
+                onChange={(e) => updateEditing({ baseURL: e.target.value })}
                 placeholder="https://api.deepseek.com/v1"
               />
             </div>
@@ -261,7 +282,7 @@ export function Endpoints({
               <label>models（逗号分隔，可写 id 或 id:contextWindow）</label>
               <input
                 value={editing.modelsText}
-                onChange={(e) => setEditing({ ...editing, modelsText: e.target.value })}
+                onChange={(e) => updateEditing({ modelsText: e.target.value })}
                 placeholder="deepseek-chat:64000, deepseek-reasoner"
               />
             </div>
@@ -272,7 +293,7 @@ export function Endpoints({
                   <label>systemRole</label>
                   <select
                     value={editing.systemRole}
-                    onChange={(e) => setEditing({ ...editing, systemRole: e.target.value as Draft['systemRole'] })}
+                    onChange={(e) => updateEditing({ systemRole: e.target.value as Draft['systemRole'] })}
                   >
                     <option value="">（默认 system）</option>
                     <option value="system">system</option>
@@ -283,9 +304,7 @@ export function Endpoints({
                   <label>maxTokensField</label>
                   <select
                     value={editing.maxTokensField}
-                    onChange={(e) =>
-                      setEditing({ ...editing, maxTokensField: e.target.value as Draft['maxTokensField'] })
-                    }
+                    onChange={(e) => updateEditing({ maxTokensField: e.target.value as Draft['maxTokensField'] })}
                   >
                     <option value="">（默认 max_tokens）</option>
                     <option value="max_tokens">max_tokens</option>
@@ -296,9 +315,7 @@ export function Endpoints({
                   <label>thinkingFormat</label>
                   <select
                     value={editing.thinkingFormat}
-                    onChange={(e) =>
-                      setEditing({ ...editing, thinkingFormat: e.target.value as Draft['thinkingFormat'] })
-                    }
+                    onChange={(e) => updateEditing({ thinkingFormat: e.target.value as Draft['thinkingFormat'] })}
                   >
                     <option value="">（默认 none）</option>
                     <option value="none">none</option>

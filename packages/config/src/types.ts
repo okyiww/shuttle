@@ -1,4 +1,4 @@
-export type LlmApi = 'openai-completions' | 'anthropic-messages'
+export type LlmApi = 'openai-completions' | 'anthropic-messages' | 'ollama'
 
 export interface ModelConfig {
   id: string
@@ -25,7 +25,7 @@ export interface EndpointConfig {
    * (0600); every read path returns it masked via `maskConfig`.
    */
   apiKey?: string
-  apiKeyEnv: string
+  apiKeyEnv?: string
   headers?: Record<string, string>
   compat?: CompatConfig
   models?: ModelConfig[]

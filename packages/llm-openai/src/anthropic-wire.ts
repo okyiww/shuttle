@@ -133,10 +133,22 @@ function toAnthropicMessages(messages: GenerateOptions['messages']): { system?: 
       case 'system':
         systemParts.push(message.content)
         break
-      case 'user':
+      case 'user': {
         flushToolResults()
-        out.push({ role: 'user', content: message.content })
+        if (!message.images?.length) {
+          out.push({ role: 'user', content: message.content })
+          break
+        }
+        const blocks: unknown[] = []
+        if (message.content !== '') blocks.push({ type: 'text', text: message.content })
+        for (const dataUrl of message.images) {
+          const parsed = /^data:([^;]+);base64,(.+)$/.exec(dataUrl)
+          if (!parsed) continue
+          blocks.push({ type: 'image', source: { type: 'base64', media_type: parsed[1], data: parsed[2] } })
+        }
+        out.push({ role: 'user', content: blocks })
         break
+      }
       case 'assistant': {
         flushToolResults()
         if (!message.toolCalls?.length) {

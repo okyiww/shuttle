@@ -140,7 +140,7 @@ type StreamChunk =
 
 **Adapter（@shuttle/llm-openai）**——唯一需要的模型包：
 
-- `api: openai-completions | anthropic-messages` 切换 wire 协议；
+- `api: openai-completions | anthropic-messages | ollama` 切换 wire 协议；
 - `baseURL` / `apiKey`（存用户层，读取路径全掩码）/ `apiKeyEnv`（环境变量回退）/ `headers` / `timeoutMs` / `retryPolicy`；
 - `compat` 开关修正网关差异：`thinkingFormat`、`systemRole`、`maxTokensField` 等；
 - 失败码 provider 中立：`NO_ADAPTER / MISSING_CREDENTIAL / RATE_LIMIT / CONTEXT_WINDOW_EXCEEDED`。
@@ -160,6 +160,11 @@ endpoints:
     baseURL: https://llm.example.com/v1
     apiKeyEnv: COMPANY_LLM_KEY
     compat: { thinkingFormat: deepseek }
+  # 本地 Ollama：免 API key，baseURL 缺省即为 http://localhost:11434
+  ollama:
+    api: ollama
+    baseURL: http://localhost:11434
+    models: [{ id: deepseek-r1:8b }]
 ```
 
 切换 endpoint 的三种方式（按 dsh 的习惯）：UI 切换器（写用户层）→ agent 配置默认值 → `request` hook 请求级改写。
@@ -237,6 +242,11 @@ turn/end
 ```
 
 模型历史每 step 从日志重新 derive 并 freeze；重试不重复组装；取消是协作式的（honor `AbortSignal`）。前端流式渲染直接消费 `StreamChunk`，经 BFF 的 SSE 转发。
+
+照抄 dsh 的两个空响应语义（`llm-retry`）：
+
+- **EMPTY_RESPONSE 可重试**：wire 合法完成但既无正文也无工具调用（reasoning-only 也算）→ adapter 按重试策略**重发同一请求**（body 不变，不改写 prompt）。重试耗尽后抛 `EMPTY_RESPONSE`，turn 以空消息落定，UI 明确提示。
+- **空内容不进派生历史**：空 assistant 消息留在日志（surface/统计），但 `deriveMessages` 排除——空轮次不会成为后续请求的上下文。
 
 ## 快速开始
 

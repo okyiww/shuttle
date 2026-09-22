@@ -22,6 +22,12 @@ export type SessionEvent =
   | (SessionEventBase & { type: 'assistant/message'; message: Message })
   | (SessionEventBase & { type: 'tool/call'; toolCallId: string; name: string; arguments: string })
   | (SessionEventBase & { type: 'tool/result'; toolCallId: string; content: string })
+  | (SessionEventBase & {
+      type: 'context/injection'
+      tag: 'agent-instructions' | 'skills-catalog'
+      digest: string
+      content: string
+    })
 
 export type SessionEventType = SessionEvent['type']
 

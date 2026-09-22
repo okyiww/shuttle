@@ -1,0 +1,24 @@
+{
+  "name": "@shuttle/memory",
+  "version": "0.0.0",
+  "description": "Project memory: agent-instructions (AGENTS.md chain with byte budget), skill loading (.shuttle/skills + ~/.shuttle/skills), distilled session experience — dsh semantics, hand-rolled, zero runtime deps",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf lib"
+  }
+}

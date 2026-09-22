@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { sessionsRoot, SESSION_FILE_NAME, SESSION_META_FILE_NAME } from '@shuttle/session'
 import type { SessionEvent } from '@shuttle/session'
@@ -85,6 +85,13 @@ export function listSessions(): SessionSummary[] {
       }
     })
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+}
+
+/** Delete every session directory (all cwds). Returns how many were removed. */
+export function clearAllSessions(): number {
+  const dirs = scanSessionDirs()
+  for (const entry of dirs) rmSync(entry.dir, { recursive: true, force: true })
+  return dirs.length
 }
 
 /** Locate a session dir by id across all cwds (sessions are resumable from any project). */

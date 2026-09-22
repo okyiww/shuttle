@@ -20,7 +20,8 @@ import {
   handleReconnectMcp,
   handleResolveApproval,
 } from './routes-mcp.js'
-import { handleListSessions, handleSessionEvents } from './routes-sessions.js'
+import { handleClearSessions, handleListSessions, handleSessionEvents } from './routes-sessions.js'
+import { handleDistill, handleListNotes, handleListSkills, handleMemoryDelete, handleMemoryPromote, handleMemoryRead, handleMemoryWrite, handleSessionsDistill, handleSkillContent, handleSkillDelete, handleSkillWrite } from './routes-memory.js'
 import { createStaticHandler } from './static.js'
 import { createState } from './state.js'
 import type { ApiState } from './state.js'
@@ -126,8 +127,56 @@ async function dispatch(
       handleListSessions(req, res)
       return
     }
+    if (segs.length === 2 && segs[1] === 'sessions' && req.method === 'DELETE') {
+      handleClearSessions(req, res)
+      return
+    }
     if (segs.length === 4 && segs[1] === 'sessions' && segs[3] === 'events' && req.method === 'GET') {
       handleSessionEvents(req, res, segs[2]!)
+      return
+    }
+    if (segs.length === 4 && segs[1] === 'sessions' && segs[3] === 'distill' && req.method === 'POST') {
+      await handleDistill(req, res, state, segs[2]!)
+      return
+    }
+    if (segs.length === 3 && segs[1] === 'sessions' && segs[2] === 'distill' && req.method === 'POST') {
+      await handleSessionsDistill(req, res, state)
+      return
+    }
+    if (segs.length === 3 && segs[1] === 'memory' && segs[2] === 'write' && req.method === 'POST') {
+      await handleMemoryWrite(req, res, cwd)
+      return
+    }
+    if (segs.length === 2 && segs[1] === 'skills' && req.method === 'GET') {
+      handleListSkills(res, state)
+      return
+    }
+    if (segs.length === 2 && segs[1] === 'skills' && req.method === 'PUT') {
+      await handleSkillWrite(req, res, state)
+      return
+    }
+    if (segs.length === 3 && segs[1] === 'skills' && req.method === 'GET') {
+      handleSkillContent(res, state, segs[2]!)
+      return
+    }
+    if (segs.length === 3 && segs[1] === 'skills' && req.method === 'DELETE') {
+      handleSkillDelete(res, state, segs[2]!)
+      return
+    }
+    if (segs.length === 2 && segs[1] === 'notes' && req.method === 'GET') {
+      handleListNotes(res, cwd)
+      return
+    }
+    if (segs.length === 3 && segs[1] === 'memory' && segs[2] === 'read' && req.method === 'GET') {
+      handleMemoryRead(req, res, cwd)
+      return
+    }
+    if (segs.length === 3 && segs[1] === 'memory' && segs[2] === 'promote' && req.method === 'POST') {
+      await handleMemoryPromote(req, res, state, cwd)
+      return
+    }
+    if (segs.length === 2 && segs[1] === 'memory' && req.method === 'DELETE') {
+      handleMemoryDelete(req, res, cwd)
       return
     }
     if (segs.length === 2 && segs[1] === 'chat' && req.method === 'POST') {

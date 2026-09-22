@@ -1,9 +1,14 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sendError, sendJson } from './http-utils.js'
-import { isValidSessionId, listSessions, readSessionEvents } from './session-index.js'
+import { clearAllSessions, isValidSessionId, listSessions, readSessionEvents } from './session-index.js'
 
 export function handleListSessions(_req: IncomingMessage, res: ServerResponse): void {
   sendJson(res, 200, listSessions())
+}
+
+export function handleClearSessions(_req: IncomingMessage, res: ServerResponse): void {
+  const deleted = clearAllSessions()
+  sendJson(res, 200, { ok: true, deleted })
 }
 
 export function handleSessionEvents(_req: IncomingMessage, res: ServerResponse, id: string): void {

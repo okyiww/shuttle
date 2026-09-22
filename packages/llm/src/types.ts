@@ -8,7 +8,7 @@ export interface ToolCall {
 /** One model-visible message. `system` must be the leading system message. */
 export type Message =
   | { role: 'system'; content: string }
-  | { role: 'user'; content: string }
+  | { role: 'user'; content: string; /** 图片附件，data URL（`data:<mime>;base64,…`）。 */ images?: string[] }
   | { role: 'assistant'; content: string; toolCalls?: ToolCall[]; reasoning?: string }
   | { role: 'tool'; toolCallId: string; content: string }
 

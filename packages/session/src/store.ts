@@ -103,11 +103,31 @@ export class SessionStore {
    */
   deriveMessages(): Message[] {
     const events = this.readAll()
+    // context/injection: same-tag injections supersede earlier ones — only the
+    // last occurrence of each tag enters the derived history (dsh catalog /
+    // baseline semantics). Injection events never carry tools, so the
+    // tool/call pairing below is unaffected.
+    const lastInjectionIndex = new Map<string, number>()
+    events.forEach((event, index) => {
+      if (event.type === 'context/injection') lastInjectionIndex.set(event.tag, index)
+    })
     const messages: Message[] = []
     let i = 0
     while (i < events.length) {
       const event = events[i]!
+      if (event.type === 'context/injection') {
+        if (lastInjectionIndex.get(event.tag) === i) messages.push({ role: 'user', content: event.content })
+        i++
+        continue
+      }
       if (event.type === 'user/message' || event.type === 'assistant/message') {
+        // dsh 语义：空内容且无调用的 assistant 消息留在日志里（surface/统计），
+        // 但不进入派生历史——空轮次不该成为后续请求的上下文。
+        if (event.type === 'assistant/message' && event.message.role === 'assistant' &&
+            !event.message.toolCalls?.length && event.message.content.trim() === '') {
+          i++
+          continue
+        }
         messages.push(event.message)
         i++
         continue

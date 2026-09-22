@@ -28,6 +28,7 @@
     "@shuttle/llm": "workspace:*",
     "@shuttle/llm-openai": "workspace:*",
     "@shuttle/mcp": "workspace:*",
+    "@shuttle/memory": "workspace:*",
     "@shuttle/session": "workspace:*",
     "@shuttle/tools": "workspace:*"
   }

@@ -6,6 +6,7 @@
 
 - `api: 'openai-completions'`（默认）：`POST {baseURL}/chat/completions`，`stream: true` + `stream_options.include_usage`；响应逐行解析 `data:` 帧，`[DONE]` 收尾。**finish 缓存在流末尾发出**，保证 usage 先于 finish（网关的 finish_reason 通常先于 usage 帧到达）。
 - `api: 'anthropic-messages'`：`POST {baseURL}/messages`（`x-api-key` + `anthropic-version`），`message_start/message_delta` 累计 usage，`stop_reason` 映射 finish。
+- `api: 'ollama'`：`POST {baseURL}/api/chat`（NDJSON 逐行解析，非 SSE），`think: true` 时 `message.thinking` → `reasoning-delta`；tool 结果按 `name`（由前一条 assistant 的 toolCalls 解析 toolCallId 得来）回传；**不发任何凭据头**，baseURL 缺省兜底 `http://localhost:11434`。
 - `compat` 开关：`systemRole: 'system'|'developer'`、`maxTokensField: 'max_tokens'|'max_completion_tokens'`、`thinkingFormat: 'none'|'deepseek'`（deepseek 时若 `GenerateOptions.reasoningEffort` 存在则透传为 `reasoning_effort`）；响应侧 `reasoning_content`/`reasoning`/`thinking` 一律映射为 `reasoning-delta`。
 
 ## 失败与重试

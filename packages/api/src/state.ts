@@ -5,6 +5,7 @@ import { Context } from '@shuttle/core'
 import { LlmService } from '@shuttle/llm'
 import { McpManager } from '@shuttle/mcp'
 import { OpenAiCompatibleAdapter } from '@shuttle/llm-openai'
+import { findProjectRoot, SkillLoader } from '@shuttle/memory'
 import { ToolService } from '@shuttle/tools'
 
 export interface ApiState {
@@ -12,6 +13,7 @@ export interface ApiState {
   readonly llm: LlmService
   readonly tools: ToolService
   readonly mcp: McpManager
+  readonly skills: SkillLoader
   /** Latest merged config; swapped (never mutated) on hot reload. */
   readonly loaded: LoadedConfig
   /** Re-read config from disk and swap in fresh registrations. */
@@ -31,8 +33,26 @@ export function createState(cwd: string): ApiState {
   const llm = new LlmService(ctx)
   const tools = new ToolService(ctx)
   const mcp = new McpManager(tools)
+  const skills = new SkillLoader(findProjectRoot(cwd))
   ctx.register('tools', tools)
   ctx.register('mcp', mcp)
+  // dsh 两段式 skill 消费：目录注入 `<available_skills>` 摘要（chat 前），
+  // 模型用本工具取全文。找不到时抛错 → ToolService 捕获为 {ok:false, content}。
+  tools.register({
+    name: 'skill',
+    description: '加载指定 skill 的完整内容。目录中的描述只是摘要，实际使用skill前必须调用本工具获取全文。',
+    parameters: {
+      type: 'object',
+      properties: { name: { type: 'string', description: 'skill 名' } },
+      required: ['name'],
+    },
+    execute: (args) => {
+      const name = typeof args.name === 'string' ? args.name : ''
+      const content = skills.get(name)
+      if (content === undefined) throw new Error(`skill not found: ${name}`)
+      return `<skill_content>\n${content}\n</skill_content>`
+    },
+  })
   let loaded: LoadedConfig
   let configDisposer: Disposer | undefined
   let adapterDisposer: Disposer | undefined
@@ -65,6 +85,7 @@ export function createState(cwd: string): ApiState {
     llm,
     tools,
     mcp,
+    skills,
     get loaded() {
       return loaded
     },

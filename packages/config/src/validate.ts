@@ -13,7 +13,7 @@ import type {
 
 type YamlMap = Record<string, unknown>
 
-const API_VALUES = ['openai-completions', 'anthropic-messages'] as const
+const API_VALUES = ['openai-completions', 'anthropic-messages', 'ollama'] as const
 const SYSTEM_ROLE_VALUES = ['system', 'developer'] as const
 const MAX_TOKENS_FIELD_VALUES = ['max_tokens', 'max_completion_tokens'] as const
 const THINKING_FORMAT_VALUES = ['none', 'deepseek'] as const
@@ -32,6 +32,8 @@ const KNOWN_TOOLS_KEYS = ['guard'] as const
 const KNOWN_GUARD_KEYS = ['policies'] as const
 const GUARD_ACTION_VALUES = ['allow', 'ask', 'deny'] as const
 const AUTH_VALUES = ['none', 'oauth'] as const
+
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434'
 
 /** Structural validation with source positions; fills defaults (e.g. `api`). */
 export function validateConfig(value: YamlMap, source: string, lines: Map<string, number>): ShuttleConfig {
@@ -96,13 +98,14 @@ export function validateConfig(value: YamlMap, source: string, lines: Map<string
 function validateEndpoint(name: string, raw: YamlMap, source: string, lines: Map<string, number>): EndpointConfig {
   const path = `endpoints.${name}`
   rejectUnknownKeys(raw, KNOWN_ENDPOINT_KEYS, path, source, lines)
-  const endpoint: EndpointConfig = {
-    api: 'openai-completions',
-    baseURL: expectString(raw.baseURL, `${path}.baseURL`, source, lines),
-    apiKeyEnv: expectString(raw.apiKeyEnv, `${path}.apiKeyEnv`, source, lines),
-  }
-  if ('api' in raw) {
-    endpoint.api = expectEnum(raw.api, API_VALUES, `${path}.api`, source, lines)
+  const api = 'api' in raw ? expectEnum(raw.api, API_VALUES, `${path}.api`, source, lines) : 'openai-completions'
+  const endpoint: EndpointConfig = { api, baseURL: '' }
+  // ollama is a local, keyless service: a missing/empty baseURL falls back to
+  // its localhost default; every other api keeps baseURL required.
+  if (api === 'ollama' && (raw.baseURL === undefined || raw.baseURL === '')) {
+    endpoint.baseURL = DEFAULT_OLLAMA_BASE_URL
+  } else {
+    endpoint.baseURL = expectString(raw.baseURL, `${path}.baseURL`, source, lines)
   }
   if ('apiKey' in raw) {
     // Real keys live only in the user layer (0600). Empty string means
@@ -112,6 +115,7 @@ function validateEndpoint(name: string, raw: YamlMap, source: string, lines: Map
     }
     endpoint.apiKey = raw.apiKey
   }
+  if ('apiKeyEnv' in raw) endpoint.apiKeyEnv = expectString(raw.apiKeyEnv, `${path}.apiKeyEnv`, source, lines)
   if ('headers' in raw) endpoint.headers = expectStringMap(raw.headers, `${path}.headers`, source, lines)
   if ('compat' in raw) {
     const compat = expectMap(raw.compat, `${path}.compat`, source, lines)

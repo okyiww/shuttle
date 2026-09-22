@@ -7,6 +7,8 @@ export type LlmErrorCode =
   | 'UNEXPECTED_STATUS'
   | 'PROTOCOL_VIOLATION'
   | 'DUPLICATE_ADAPTER'
+  /** Wire-valid completion with no text and no tool calls (模型弃权); dsh llm-retry 语义. */
+  | 'EMPTY_RESPONSE'
 
 /** Unified provider-neutral LLM failure. `retryable` is a hint for the retry policy. */
 export class LlmError extends Error {

@@ -20,6 +20,7 @@
       "@shuttle/llm": ["./packages/llm/src/index.ts"],
       "@shuttle/llm-openai": ["./packages/llm-openai/src/index.ts"],
       "@shuttle/mcp": ["./packages/mcp/src/index.ts"],
+      "@shuttle/memory": ["./packages/memory/src/index.ts"],
       "@shuttle/session": ["./packages/session/src/index.ts"],
       "@shuttle/tools": ["./packages/tools/src/index.ts"]
     }

@@ -113,6 +113,11 @@ export async function handleTestEndpoint(_req: IncomingMessage, res: ServerRespo
     }
     sendJson(res, 200, { ok: true, latencyMs: Date.now() - started })
   } catch (error) {
+    // maxTokens=1 下拿到 wire 合法的空响应（EMPTY_RESPONSE）同样证明链路通。
+    if (isLlmError(error) && error.code === 'EMPTY_RESPONSE') {
+      sendJson(res, 200, { ok: true, latencyMs: Date.now() - started })
+      return
+    }
     sendJson(res, 200, { ok: false, error: describeTestError(error) })
   }
 }
