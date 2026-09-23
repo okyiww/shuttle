@@ -3,4 +3,3 @@ lib/
 dist/
 *.log
 .DS_Store
-.shuttle/
